@@ -8,7 +8,7 @@
  */
 
 #include "../stream/iiostream-common_copy.hpp"
-
+#include <iostream> 
 
 
 
@@ -47,8 +47,8 @@ void tx(int argc, char **argv )
 	printf("%s:%d\n", __func__, __LINE__);
 	FILE *file, *file2;
 	
-	file  = fopen("/home/ivan/Desktop/Work_dir/test_file_all/sdr/resurs_file/imag_part.txt", "r");
-    file2 = fopen("/home/ivan/Desktop/Work_dir/test_file_all/sdr/resurs_file/real_part.txt", "r");
+	file  = fopen("../resurs_file/imag_part.txt", "r");
+    file2 = fopen("../resurs_file/real_part.txt", "r");
 
 	
 
@@ -64,7 +64,10 @@ void tx(int argc, char **argv )
         }
 
 
-    } 
+    }
+	else {
+		std::cout << "error open file" << std::endl;
+	} 
 	
 	int count = 0;
 	while (count < 100) {
@@ -146,8 +149,8 @@ void rx(int argc, char **argv){
 	
 
 
-	file3  = fopen("/home/ivan/Desktop/Work_dir/test_file_all/sdr/resurs_file/rx_imag.txt", "w");
-    file4 = fopen("/home/ivan/Desktop/Work_dir/test_file_all/sdr/resurs_file/rx_real.txt", "w");
+	file3  = fopen("../resurs_file/rx_imag.txt", "w");
+    file4 = fopen("../resurs_file/rx_real.txt", "w");
 
 	complex *samples = (complex*) malloc(sizeof(complex)*5760);
 
@@ -226,11 +229,11 @@ void stream(int argc, char **argv)
 	
 	FILE *file, *file2, *file3, *file4;
 	
-	file  = fopen("/home/ivan/Desktop/Work_dir/test_file_all/sdr/resurs_file/imag_part.txt", "r");
-    file2 = fopen("/home/ivan/Desktop/Work_dir/test_file_all/sdr/resurs_file/real_part.txt", "r");
+	file  = fopen("../resurs_file/imag_part.txt", "r");
+    file2 = fopen("../resurs_file/real_part.txt", "r");
 
-	file3  = fopen("/home/ivan/Desktop/Work_dir/test_file_all/sdr/resurs_file/rx_imag.txt", "w");
-    file4 = fopen("/home/ivan/Desktop/Work_dir/test_file_all/sdr/resurs_file/rx_real.txt", "w");
+	file3  = fopen("../resurs_file/rx_imag.txt", "w");
+    file4 = fopen("../resurs_file/rx_real.txt", "w");
 
 	complex *samples = (complex*) malloc(sizeof(complex)*5760);
 
