@@ -42,10 +42,10 @@ def resource_grid(data, count_frames, len_frame, Nfft, cp, title = ""):
     #plt.show()
 
 
-real = np.loadtxt("/home/ivan/Desktop/Work_dir/test_file_all/sdr/resurs_file/rx_real.txt")
+real = np.loadtxt("../resurs_file/rx_imag.txt")
 
 
-imag = np.loadtxt("/home/ivan/Desktop/Work_dir/test_file_all/sdr/resurs_file/rx_imag.txt")
+imag = np.loadtxt("../resurs_file/rx_imag.txt")
 
 # real = real[:int(5.760e6)]
 # imag = imag[:int(5.760e6)]
@@ -62,13 +62,13 @@ N_pilot = 6
 
 plt.figure(figsize=(10,10))
 plt.subplot(2,1,1)
-resource_grid(rx, 5700, 6, N_fft, CP, title="tx 1 buffer")
+resource_grid(rx, 570, 6, N_fft, CP, title="tx 1 buffer")
 
-# data = corr_pss_time(rx,N_fft)
+data = corr_pss_time(rx,N_fft)
 
-# data_cor = calculate_correlation(N_fft, data, 15000)#
+data_cor = calculate_correlation(N_fft, data, 15000)#
 
-# plt.subplot(2,1,2)
-# resource_grid(data_cor,5,6,N_fft, CP)
+plt.subplot(2,1,2)
+resource_grid(data_cor,5,6,N_fft, CP)
 
 plt.show()
