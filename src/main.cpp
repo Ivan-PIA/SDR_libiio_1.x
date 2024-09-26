@@ -43,8 +43,8 @@ int main (int argc, char **argv)
 
 	//printf("* Starting IO streaming (press CTRL+C to cancel)\n");
 	
-	rx(argc, argv);
-	//stream(argc, argv);
+	//rx(argc, argv);
+	stream(argc, argv);
 	//shutdown();
 
 	return 0;
