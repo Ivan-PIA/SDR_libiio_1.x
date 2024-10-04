@@ -34,7 +34,7 @@
 // }
 
 //#include "ad9361.h"
-#include "../stream/iiostream-common_copy.hpp" 
+#include "../stream/iiostream-common.hpp" 
 #include <stdio.h>
 
 int main (int argc, char **argv)
@@ -44,7 +44,7 @@ int main (int argc, char **argv)
 	//printf("* Starting IO streaming (press CTRL+C to cancel)\n");
 	
 	//rx(argc, argv);
-	stream(argc, argv);
+	stream_amplitude_thread(argc, argv);
 	//shutdown();
 
 	return 0;
