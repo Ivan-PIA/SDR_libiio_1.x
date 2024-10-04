@@ -9,24 +9,24 @@ include_directories("/usr/include/iio")
 
 set(HEADER_FILES
     iio/iio.h
-    ../ad9361/ad9361_copy.hpp
-    ..sream/iiostream-common_copy.hpp
+    ../ad9361/ad9361.hpp
+    ..sream/iiostream-common.hpp
     iio/iio-debug.h
     # ad9361.h 
     #device_api.h
 )
 
 set(SOURCES
-    ../ad9361/ad9361_copy.cpp
-    ../stream/iiostream-common_copy.cpp
+    ../ad9361/ad9361.cpp
+    ../stream/iiostream-common.cpp
     # device_api.c
     ../src/main.cpp
 )
 
 
 set(TX
-    ../ad9361/ad9361_copy.cpp
-    ../stream/iiostream-common_copy.cpp
+    ../ad9361/ad9361.cpp
+    ../stream/iiostream-common.cpp
     # device_api.c
     ../src/tx.cpp
 )
