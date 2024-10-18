@@ -7,7 +7,11 @@
  **/
 
 
+
 #include "../ad9361/ad9361.hpp"
+#include "../log_level/log.hpp"
+#include "../src/correlation/time_corr.hpp"
+
 
 struct iio_context *ctx   = NULL;
 struct iio_channel *rx0_i = NULL;
@@ -152,8 +156,14 @@ bool cfg_ad9361_streaming_ch(struct stream_cfg *cfg, enum iodev type, int chid)
 		errchk(iio_attr_write_string(attr_gain, "manual"), "manual");
 
 	wr_ch_lli(chn, "rf_bandwidth",       cfg->bw_hz);
-	wr_ch_lli(chn, "sampling_frequency", cfg->fs_hz);
 	
+	show_log(DEBAG, "\n[ rf_bandwidth | %d ] \n\n", cfg->bw_hz);
+	show_log(DEBAG, "\n[ sampling_frequency | %d ] \n\n", cfg->fs_hz);
+
+	wr_ch_lli(chn, "sampling_frequency", cfg->fs_hz);
+
+	
+
 	if(type == RX){
 		wr_ch_lli(chn, "hardwaregain",RX_GAIN);
 	}
@@ -190,7 +200,7 @@ bool cfg_ad9361_streaming_ch(struct stream_cfg *cfg, enum iodev type, int chid)
 }
 
 
-struct iio_device* context_tx(int argc, char **argv){
+struct iio_device* context_tx(char *ip){
 	
 	struct iio_device *tx;
 	size_t ntx = 0;
@@ -201,18 +211,15 @@ struct iio_device* context_tx(int argc, char **argv){
 	int err;
 
 	// TX stream config
-	txcfg.bw_hz = MHZ(1.5); // 1.5 MHz rf bandwidth
-	txcfg.fs_hz = MHZ(2.5);   // 2.5 MS/s tx sample rate
-	txcfg.lo_hz = GHZ(1.8); // 2.5 GHz rf frequency
+	txcfg.bw_hz = MHZ(2); // 1.5 MHz rf bandwidth
+	txcfg.fs_hz = MHZ(2.1);   // 2.5 MS/s tx sample rate
+	txcfg.lo_hz = GHZ(1.9); // 2.5 GHz rf frequency
 	txcfg.rfport = "A"; // port A (select for rf freq.)
 
 	printf("* Acquiring IIO context\n");
-	if (argc == 1) {
-		IIO_ENSURE((ctx = iio_create_context(NULL, NULL)) && "No context");
-	}
-	else if (argc == 2) {
-		IIO_ENSURE((ctx = iio_create_context(NULL, argv[1])) && "No context");
-	}
+
+	IIO_ENSURE((ctx = iio_create_context(NULL, ip)) && "No context");
+
 	IIO_ENSURE(iio_context_get_devices_count(ctx) > 0 && "No devices");
 
 	printf("* Acquiring AD9361 streaming devices\n");
@@ -262,7 +269,7 @@ struct iio_device* context_tx(int argc, char **argv){
 }
 
 
-struct iio_device* context_rx(int argc, char **argv){
+struct iio_device* context_rx(char *ip){
 	// Streaming devices
 
 	struct iio_device *rx;
@@ -283,20 +290,21 @@ struct iio_device* context_rx(int argc, char **argv){
 	//signal(SIGINT, handle_sig);
 
 	// RX stream config
-	rxcfg.bw_hz = MHZ(2);  // 2 MHz rf bandwidth
-	rxcfg.fs_hz = MHZ(2.5);// 2.5 MS/s rx sample rate
-	rxcfg.lo_hz = GHZ(1.8);// 2.5 GHz rf frequency
+	rxcfg.bw_hz = MHZ(2);   // 2 MHz rf bandwidth
+	rxcfg.fs_hz = MHZ(2.1); // 2.5 MS/s rx sample rate
+	rxcfg.lo_hz = GHZ(1.9); // 2.5 GHz rf frequency
 	rxcfg.rfport = "A_BALANCED"; // port A (select for rf freq.)
 
 
 
 	printf("* Acquiring IIO context\n");
-	if (argc == 1) {
-		IIO_ENSURE((ctx = iio_create_context(NULL, NULL)) && "No context");
-	}
-	else if (argc == 2) {
-		IIO_ENSURE((ctx = iio_create_context(NULL, argv[1])) && "No context");
-	}
+	// if (argc == 1) {
+	// 	IIO_ENSURE((ctx = iio_create_context(NULL, NULL)) && "No context");
+	// }
+	show_log(DEBAG, "\n[ %s | %d ] \n\n", __func__, __LINE__);
+
+	IIO_ENSURE((ctx = iio_create_context(NULL, ip)) && "No context");
+
 	IIO_ENSURE(iio_context_get_devices_count(ctx) > 0 && "No devices");
 
 	printf("* Acquiring AD9361 streaming devices\n");
@@ -334,20 +342,347 @@ struct iio_device* context_rx(int argc, char **argv){
 	}
 
 	rxstream = iio_buffer_create_stream(rxbuf, 4, BLOCK_SIZE);
-
+	// show_log(DEBAG, "\n[ %s | %d ] \n\n", __func__, __LINE__);
 	return rx;
+
+}
+
+struct iio_device *initialize_device_rx(char *ip, size_t &rx_sample_sz, const struct iio_block *&rxblock, struct iio_device *&rx, struct iio_stream *&rxstream)
+{	
+	const struct iio_device *dev;
+	const struct iio_context *ctx;
+	// show_log(DEBAG, "\n[ %s | %d ] \n\n", __func__, __LINE__);
+
+    rx = context_rx(ip);
+	// show_log(DEBAG, "\n[ %s | %d ] \n\n", __func__, __LINE__);
+    rx_sample_sz = iio_device_get_sample_size(rx, rxmask);
+	// show_log(DEBAG, "\n[ %s | %d ] \n\n", __func__, __LINE__);
+	show_log(DEBAG, "\n[ %s | %d ] \n\n", __func__, __LINE__);
+	dev = iio_channel_get_device(rx0_i);
+	ctx = iio_device_get_context(dev);
+
+
+    // rxblock = iio_stream_get_next_block(rxstream);
+
+    return rx;
+}
+
+struct iio_device *initialize_device_tx(char *ip, size_t &tx_sample_sz, struct iio_device *&tx)
+{	
+	const struct iio_device *dev;
+	const struct iio_context *ctx;
+
+    tx = context_tx(ip);
+
+	show_log(DEBAG, "\n[ %s | %d ] \n\n", __func__, __LINE__);
+    tx_sample_sz = iio_device_get_sample_size(tx, txmask);
+
+	dev = iio_channel_get_device(tx0_i);
+	ctx = iio_device_get_context(dev);
+
+    
+
+    return tx;
+}
+
+std::vector<comp> process_rx_block(const struct iio_block *rxblock, size_t rx_sample_sz)
+{
+    int16_t *p_dat, *p_end;
+    ptrdiff_t p_inc = rx_sample_sz;
+    
+	std::vector<comp> rx_data;
+
+	// show_log(DEBAG, "\n[ %s | %d ] \n\n", __func__, __LINE__);
+
+    p_end = (int16_t*)iio_block_end(rxblock);
+    for (p_dat = (int16_t*)iio_block_first(rxblock, rx0_i); p_dat < p_end; 
+         p_dat += p_inc / sizeof(*p_dat)) 
+    {
+        /* Example: swap I and Q */
+        int16_t i = p_dat[0];
+        int16_t q = p_dat[1];
+
+        p_dat[0] = q;
+        p_dat[1] = i;
+
+		rx_data.push_back(comp(i, q));
+        // fprintf(file3, "%d\n", q);
+        // fprintf(file4, "%d\n", i);
+    }
+	// show_log(DEBAG, "\n[ %s | %d ] \n\n", __func__, __LINE__);
+	return rx_data;
+}
+
+std::vector<comp> read_from_block(char *ip, int count)
+{
+    size_t rx_sample_sz;
+    struct iio_device *rx;
+    const struct iio_block *rxblock;
+    // struct iio_stream *rxstream;
+
+	std::vector<comp> temp;
+	std::vector<comp> rx_data;
+	
+    rx = initialize_device_rx(ip, rx_sample_sz, rxblock, rx, rxstream);
+	int i = 0;
+	
+	while(i < count)
+	{	
+		
+		rxblock = iio_stream_get_next_block(rxstream);
+		temp = process_rx_block(rxblock, rx_sample_sz);
+		rx_data.insert(rx_data.end(), temp.begin(), temp.end());
+		i++;
+
+	}
+
+
+        
+	return rx_data;
+}
+
+
+
+void write_to_file(std::vector<comp> data){
+	FILE *file3, *file4;
+
+	file3  = fopen("/home/ivan/SDR_libiio_1.x/resurs_file/all_rx_imag.txt", "w");
+    file4 = fopen("/home/ivan/SDR_libiio_1.x/resurs_file/all_rx_real.txt", "w");
+	for (int i = 0; i < data.size(); i ++){
+		fprintf(file3, "%d\n", (int16_t)data[i].imag());
+		fprintf(file4, "%d\n", (int16_t)data[i].real());
+	}
+	fclose(file3);
+	fclose(file4);
 
 }
 
 
 
-/* simple configuration and streaming */
-/* usage:
- * Default context, assuming local IIO devices, i.e., this script is run on ADALM-Pluto for example
- $./a.out
- * URI context, find out the uri by typing `iio_info -s` at the command line of the host PC
- $./a.out usb:x.x.x
- */
+
+std::vector<comp> flatten(const std::vector<std::vector<comp>>& vec) {
+    std::vector<comp> flat_vector;
+
+    for (const auto& inner_vec : vec) {
+        flat_vector.insert(flat_vector.end(), inner_vec.begin(), inner_vec.end());
+    }
+
+    return flat_vector;
+}
+
+std::vector<comp> read_from_block_real(char *ip)
+{	
+	std::mutex buffer_mutex;
+    size_t rx_sample_sz;
+    struct iio_device *rx;
+    const struct iio_block *rxblock;
+    std::vector<comp> temp;
+    std::vector<comp> rx_data;
+
+	std::vector<comp> data_with_pss;
+	std::vector<comp> all_buffer;
+    // Инициализация устройства
+    rx = initialize_device_rx(ip, rx_sample_sz, rxblock, rx, rxstream);
+
+    int block_counter = 0;
+    std::vector<std::vector<comp>> buffer_set;  // Для хранения трех буферов
+
+	
+	show_log(CONSOLE, "\t*** START RECIVING ***\n");
+    
+    while (!stop)
+    {
+        rxblock = iio_stream_get_next_block(rxstream);
+        temp = process_rx_block(rxblock, rx_sample_sz);
+
+        // Добавляем текущий буфер данных в общий
+        rx_data.insert(rx_data.end(), temp.begin(), temp.end());
+
+        // Сохраняем буфер в буферный набор
+        {
+            std::lock_guard<std::mutex> lock(buffer_mutex);
+            buffer_set.push_back(temp);
+        }
+
+        block_counter++;
+
+        // Если накоплено три буфера, запускаем функцию свертки в отдельном потоке
+        if (block_counter == 3)
+        {
+            // Асинхронный вызов функции свертки
+            std::future<std::pair<int, std::vector<comp>>> conv_and_concat_result = std::async(std::launch::async, [&buffer_set]() {
+                std::vector<comp> combined_data;
+                std::vector<comp> concatenated_buffer;
+
+    
+                // Склеиваем три буфера в один для свертки
+                for (const auto& buf : buffer_set) {
+                    combined_data.insert(combined_data.end(), buf.begin(), buf.end());
+                }
+
+                // Выполняем свертку на склеенном буфере
+                int convolution_result = convolve(combined_data);
+
+                
+                concatenated_buffer.insert(concatenated_buffer.end(), combined_data.begin(), combined_data.end());
+
+                return std::make_pair(convolution_result, concatenated_buffer);
+            });
+			
+
+            // Ожидаем завершения свертки
+            // int result = conv_result.get();
+			auto [convolution_result, concatenated_buffer] = conv_and_concat_result.get();
+
+            // Если результат свертки больше 1, останавливаем прием данных
+			
+            if (convolution_result > 9)
+            {
+				{
+					std::lock_guard<std::mutex> lock(buffer_mutex);
+					data_with_pss = flatten(buffer_set);
+				}
+                stop = true;
+				show_log(CONSOLE, "\n\t  *** PSS FOUND ***\n\n");
+				all_buffer = concatenated_buffer;
+            }
+
+            // Очищаем буферный набор и увеличиваем счетчик блоков
+            {
+                std::lock_guard<std::mutex> lock(buffer_mutex);
+                buffer_set.clear();
+            }
+            block_counter = 0;
+        }
+    }
+	write_to_file(rx_data);
+
+    return data_with_pss;
+}
+
+
+
+// std::mutex mtx;
+// std::condition_variable cv;
+// std::atomic<int> temp_count(0);
+// std::vector<comp> rx_data;
+// // bool stop = false;
+
+// int process_data()
+// {
+//     while (true)
+//     {
+//         std::unique_lock<std::mutex> lock(mtx);
+//         cv.wait(lock, [] { return temp_count.load() >= 3 || stop; });
+
+//         if (stop) break;
+
+//         // Вызываем вашу функцию свертки
+//         int result = convolve(rx_data);
+
+//         if (result > 1)
+//         {
+//             stop = true;
+// 			return 0;
+//         }
+
+//         // Сбрасываем счетчик и очищаем rx_data для следующего цикла
+//         temp_count = 0;
+//         rx_data.clear();
+//     }
+// }
+
+// std::vector<comp> read_from_block_real(char *ip)
+// {
+//     size_t rx_sample_sz;
+//     struct iio_device *rx;
+//     const struct iio_block *rxblock;
+//     // struct iio_stream *rxstream;
+
+//     rx = initialize_device_rx(ip, rx_sample_sz, rxblock, rx, rxstream);
+    
+//     // Запускаем поток для обработки данных
+//     std::thread processing_thread(process_data);
+
+//     while (!stop)
+//     {  
+//         rxblock = iio_stream_get_next_block(rxstream);
+//         std::vector<comp> temp = process_rx_block(rxblock, rx_sample_sz);
+        
+//         // Защита от одновременного доступа
+//         {
+//             std::lock_guard<std::mutex> lock(mtx);
+//             rx_data.insert(rx_data.end(), temp.begin(), temp.end());
+//             temp_count++;
+//         }
+        
+//         // Уведомляем поток обработки данных
+//         cv.notify_one();
+//     }
+    
+//     // Ждем завершения обработки
+//     if (processing_thread.joinable())
+//     {
+//         processing_thread.join();
+//     }
+
+//     return rx_data; // Вернуть данные, если нужно
+// }
+
+
+
+void process_tx_block(const struct iio_block *txblock, size_t tx_sample_sz, std::vector<comp> samples)
+{
+    int16_t *p_dat, *p_end;
+    ptrdiff_t p_inc = tx_sample_sz;
+    
+	
+
+    p_end = (int16_t*)iio_block_end(txblock);
+	
+	int i = 0;
+    for (p_dat = (int16_t*)iio_block_first(txblock, tx0_i); p_dat < p_end; 
+         p_dat += p_inc / sizeof(*p_dat)) 
+    {
+		if(i > samples.size()){
+			i = 0;
+		}
+		// std::cout << "samples: " << samples[i].real() << ", " << samples[i].imag() << std::endl;
+		p_dat[0] = (int16_t)samples[i].real(); /* Real (I) */
+		p_dat[1] = (int16_t)samples[i].imag(); /* Imag (Q) */
+		i++;
+
+    }
+
+}
+
+void write_to_block(char *ip, std::vector<comp> tx_data, int count)
+{
+    size_t tx_sample_sz;
+    struct iio_device *tx;
+    const struct iio_block *txblock;
+
+    tx = initialize_device_tx(ip, tx_sample_sz, tx);
+
+	int i = 0;
+
+	//std::cout << "samples: " << tx_data[0].real() << ", " << tx_data[0].imag() << std::endl;
+	// txblock = iio_stream_get_next_block(txstream);
+	
+
+	while(i < count)
+	{ 
+		txblock = iio_stream_get_next_block(txstream);
+		process_tx_block(txblock, tx_sample_sz, tx_data);
+		//txblock = iio_stream_get_next_block(txstream);
+		i++;
+	}
+	
+	txblock = iio_stream_get_next_block(txstream);
+	
+}
+
+
 // int main (int argc, char **argv)
 // {
 // 	struct iio_device *rx = context_rx(argc,argv);

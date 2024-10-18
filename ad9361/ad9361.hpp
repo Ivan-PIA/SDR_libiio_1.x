@@ -17,8 +17,16 @@
 #include <signal.h>
 #include <stdio.h>
 #include <errno.h>
+#include <complex>
+#include <vector>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+#include <future>
 
-#define BLOCK_SIZE (5760*5)
+
+#define BLOCK_SIZE (5760*1)
 #define RX_GAIN 10
 #define TX_GAIN 0
 /* helper macros */
@@ -32,6 +40,11 @@
 	} \
 }
 
+namespace
+{
+    using comp = std::complex<double>;
+
+}
 
 
 /* RX is input, TX is output */
@@ -101,5 +114,18 @@ struct iio_device* context_tx(int argc, char **argv);
 
 struct iio_device* context_rx(int argc, char **argv);
 
+struct iio_device *initialize_device_rx(char *ip, size_t &rx_sample_sz, const struct iio_block *&rxblock, struct iio_device *&rx, struct iio_stream *&rxstream);
 
+struct iio_device *initialize_device_tx(char *ip, size_t &tx_sample_sz, const struct iio_block *&txblock, struct iio_device *&tx, struct iio_stream *&txstream);
+
+std::vector<comp> process_rx_block(const struct iio_block *rxblock, size_t rx_sample_sz, int count);
+
+std::vector<comp> read_from_block(char *ip, int count);
+
+
+std::vector<comp> read_from_block_real(char *ip);
+
+void process_tx_block(const struct iio_block *txblock, size_t tx_sample_sz, std::vector<comp> samples);
+
+void write_to_block(char *ip, std::vector<comp> samples, int count);
 #endif
