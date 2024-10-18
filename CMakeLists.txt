@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(AD9361 CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories("/usr/include/iio")
@@ -10,30 +10,50 @@ include_directories("/usr/include/iio")
 set(HEADER_FILES
     iio/iio.h
     ../ad9361/ad9361.hpp
-    ..sream/iiostream-common.hpp
+    ../log_level/log.hpp
+    ../stream/iiostream-common.hpp
     iio/iio-debug.h
+    #../src/correlation/time_corr.hpp
+    ../src/correlation/time_corr.hpp
     # ad9361.h 
     #device_api.h
 )
 
-set(SOURCES
+
+set(RX
+    ../log_level/log.cpp
     ../ad9361/ad9361.cpp
-    ../stream/iiostream-common.cpp
+    ../src/correlation/time_corr.cpp
+    #../stream/iiostream-common.cpp
     # device_api.c
-    ../src/main.cpp
+    ../src/test/rx.cpp
 )
 
 
 set(TX
+    ../log_level/log.cpp
     ../ad9361/ad9361.cpp
-    ../stream/iiostream-common.cpp
+    ../src/correlation/time_corr.cpp
+    # ../stream/iiostream-common.cpp
     # device_api.c
-    ../src/tx.cpp
+    ../src/test/tx.cpp
+
 )
 
-add_executable(rx ${SOURCES})
-add_executable(tx ${TX})
 
+# set(TRX
+#     ../log_level/log.cpp
+#     ../ad9361/ad9361.cpp
+#     ../stream/iiostream-common.cpp
+#     # device_api.c
+#     ../src/trx.cpp
+
+# )
+
+add_executable(rx ${RX})
+add_executable(tx ${TX})
+# add_executable(trx ${TRX})
 
 target_link_libraries(rx iio)
 target_link_libraries(tx iio)
+# target_link_libraries(trx iio)
