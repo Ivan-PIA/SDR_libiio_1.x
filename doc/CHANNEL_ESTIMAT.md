@@ -90,4 +90,4 @@ $$X_{eq}[k] = \frac{Y_0}{H_c[0]} \, \frac{Y_1}{H_c[1]} \, \cdots \, \frac{Y_{N -
 <img src = "photo\est1.jpg">
 
 ###  После коррекции канала
-<img src = "photo\est1.jpg">
+<img src = "photo\est2.jpg">
