@@ -507,7 +507,7 @@ std::vector<comp> read_from_block_real(char *ip)
         block_counter++;
 
         // Если накоплено три буфера, запускаем функцию свертки в отдельном потоке
-        if (block_counter == 3)
+        if (block_counter == 6)
         {
             // Асинхронный вызов функции свертки
             std::future<std::pair<int, std::vector<comp>>> conv_and_concat_result = std::async(std::launch::async, [&buffer_set]() {
@@ -536,7 +536,7 @@ std::vector<comp> read_from_block_real(char *ip)
 
             // Если результат свертки больше 1, останавливаем прием данных
 			
-            if (convolution_result > 9)
+            if (convolution_result > 6)
             {
 				{
 					std::lock_guard<std::mutex> lock(buffer_mutex);
