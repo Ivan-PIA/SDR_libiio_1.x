@@ -42,3 +42,51 @@
 <img src = "photo/Screenshot from 2024-11-22 13-50-24.png">
 
 
+### Частотная синхронизация LTE сигнала
+
+- в прошлый раз не получилось сделать частотную синхронизацию, возможная причина слишком большая разность генераторов на базовой станции и Adalm-Pluto.
+
+- Запустим SRSRAN_4G на Adalm-Pluto:
+
+1. Перепрошить PLuto для использования **timestamp** [Инструкция по установке](https://sibsutis-rush.yonote.ru/share/93c85288-45ca-4532-8eab-4079899a5e1c/doc/adalm-pluto-sdr-timestamp-obnovlenie-firmware-ustanovka-soapysdr-plagina-wx9DGvGkQK) (Автор: Р.В. Ахпашев)
+
+2. Изменить конфигурацию в enb.conf на
+
+```
+device_name = soapy
+device_args = driver=plutosdr,usb_direct=1,timestamp_every=1920,loopback=0
+time_adv_nsamples = 40
+```
+
+3. Запуск
+
+```
+sudo srsepc/src/srsepc 
+sudo srsue/src/srsue --log.all_level=info --log.phy_lib_level=none --log.filename=stdout ue.conf
+
+sudo srsenb/src/srsenb --log.all_level=info --log.phy_lib_level=none --log.filename=stdout enb.conf
+
+```
+
+4. Записали:
+
+- Сигнал во временной области:
+
+<img src = "photo/Screenshot from 2024-12-06 16-35-53.png">
+
+- Корреляция по PSS (мы установили pci = 1 значит это PSS с root index = 29)
+
+<img src = "photo/Screenshot from 2024-12-06 15-58-39.png">
+
+
+- Ресурсная сетка сигнала (сверху) и сигнал обрезанный по PSS (снизу)
+
+<img src = "photo/Screenshot from 2024-12-06 15-52-13.png">
+
+видим частотное смещение и не однородность сигнала
+
+- Сделаем частотнуя синхронизацию по PSS
+
+<img src = "photo/Screenshot from 2024-12-06 15-52-24.png">
+
+найденое смещение CFO = 2772.6 Hz
